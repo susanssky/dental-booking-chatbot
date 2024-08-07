@@ -1,0 +1,218 @@
+Parameters:
+  IamRoleArn:
+    Type: String
+  LambdaArn:
+    Type: String
+  BotName:
+    Type: String
+Resources:
+  dentalBookingBot:
+    Type: AWS::Lex::Bot
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Name: !Ref BotName
+      RoleArn: !Ref IamRoleArn
+      DataPrivacy:
+        ChildDirected: false
+      IdleSessionTTLInSeconds: 300
+      AutoBuildBotLocales: true
+      BotLocales:
+        - LocaleId: "en_GB"
+          NluConfidenceThreshold: 0.40
+          VoiceSettings:
+            VoiceId: "Amy"
+          SlotTypes:
+            - Name: "action"
+              SlotTypeValues:
+                - SampleValue:
+                    Value: Book a appointment
+                - SampleValue:
+                    Value: Check the appointment
+                - SampleValue:
+                    Value: Cancel the appointment
+              ValueSelectionSetting:
+                ResolutionStrategy: ORIGINAL_VALUE
+            - Name: "service"
+              SlotTypeValues:
+                - SampleValue:
+                    Value: Crowns and bridges
+                - SampleValue:
+                    Value: Dental abscesses
+                - SampleValue:
+                    Value: Root canal treatment (endodontics)
+                - SampleValue:
+                    Value: Scale and polish
+                - SampleValue:
+                    Value: White fillings
+                - SampleValue:
+                    Value: Wisdom teeth
+              ValueSelectionSetting:
+                ResolutionStrategy: ORIGINAL_VALUE
+            - Name: "appointmentTime"
+              SlotTypeValues:
+                - SampleValue:
+                    Value: "10:00"
+                - SampleValue:
+                    Value: "11:30"
+                - SampleValue:
+                    Value: "14:00"
+                - SampleValue:
+                    Value: "15:30"
+                - SampleValue:
+                    Value: "17:00"
+              ValueSelectionSetting:
+                ResolutionStrategy: ORIGINAL_VALUE
+          Intents:
+            - Name: "bookingIntent"
+              SampleUtterances:
+                - Utterance: "hi"
+              DialogCodeHook:
+                Enabled: true
+              FulfillmentCodeHook:
+                Enabled: true
+                IsActive: true
+              InitialResponseSetting:
+                CodeHook:
+                  IsActive: true
+                  EnableCodeHookInvocation: true
+                  PostCodeHookSpecification:
+                    TimeoutNextStep:
+                      DialogAction:
+                        Type: EndConversation
+                    FailureNextStep:
+                      DialogAction:
+                        Type: EndConversation
+                    SuccessNextStep:
+                      DialogAction:
+                        Type: ElicitSlot
+                        SlotToElicit: action
+              SlotPriorities:
+                - Priority: 1
+                  SlotName: action
+                - Priority: 2
+                  SlotName: service
+                - Priority: 3
+                  SlotName: amazonDate
+                - Priority: 4
+                  SlotName: appointmentTime
+                - Priority: 5
+                  SlotName: amazonLastName
+                - Priority: 6
+                  SlotName: amazonId
+              Slots:
+                - Name: "action"
+                  SlotTypeName: "action"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Required"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "what action would you like to take?"
+                      MaxRetries: 3
+                      AllowInterrupt: false
+                - Name: "service"
+                  SlotTypeName: "service"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Optional"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "What service would you like to book?"
+                      MaxRetries: 3
+                      AllowInterrupt: false
+                - Name: "amazonDate"
+                  SlotTypeName: "AMAZON.Date"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Optional"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "what date would you like to book?"
+                      MaxRetries: 3
+                      AllowInterrupt: false
+                - Name: "appointmentTime"
+                  SlotTypeName: "appointmentTime"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Optional"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "when would you like to book?"
+                      MaxRetries: 3
+                      AllowInterrupt: false
+                - Name: "amazonLastName"
+                  SlotTypeName: "AMAZON.LastName"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Optional"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "what is your last name?"
+                      MaxRetries: 3
+                      AllowInterrupt: false
+                - Name: "amazonId"
+                  SlotTypeName: "AMAZON.AlphaNumeric"
+                  ValueElicitationSetting:
+                    SlotConstraint: "Optional"
+                    PromptSpecification:
+                      MessageGroupsList:
+                        - Message:
+                            PlainTextMessage:
+                              Value: "please input your id for checking the appointment"
+                      MaxRetries: 3
+                      AllowInterrupt: false
+            - Name: "FallbackIntent"
+              ParentIntentSignature: "AMAZON.FallbackIntent"
+      TestBotAliasSettings:
+        BotAliasLocaleSettings:
+          - LocaleId: "en_GB"
+            BotAliasLocaleSetting:
+              Enabled: true
+              CodeHookSpecification:
+                LambdaCodeHook:
+                  CodeHookInterfaceVersion: "1.0"
+                  LambdaArn: !Ref LambdaArn
+
+  # 3. Define a bot version that depends on the DRAFT version of the Lex Bot.
+  dentalBookingBotVersion:
+    DependsOn: dentalBookingBot
+    Type: AWS::Lex::BotVersion
+    Properties:
+      BotId: !Ref dentalBookingBot
+      BotVersionLocaleSpecification:
+        - LocaleId: en_GB
+          BotVersionLocaleDetails:
+            SourceBotVersion: DRAFT
+
+  # 4. Define the alias by providing the bot version created by the
+  #    AWS::Lex::BotVersion resource above.
+  dentalBookingBotAlias:
+    DependsOn: dentalBookingBotVersion
+    Type: AWS::Lex::BotAlias
+    Properties:
+      BotId: !Ref dentalBookingBot
+      BotAliasName: "dentalBookingVersion1Alias"
+      BotAliasLocaleSettings:
+        - LocaleId: en_GB
+          BotAliasLocaleSetting:
+            Enabled: true
+            CodeHookSpecification:
+              LambdaCodeHook:
+                CodeHookInterfaceVersion: "1.0"
+                LambdaArn: !Ref LambdaArn
+      BotVersion: !GetAtt dentalBookingBotVersion.BotVersion
+Outputs:
+  BotAliasArn:
+    Value: !GetAtt dentalBookingBotAlias.Arn
+  # arn:aws:lex:eu-west-2:xxxxxxxxxx:bot-alias/botId/alias
+  # arn:aws:lex:eu-west-2:xxxxxxxxxx:bot-alias/XXXXXXXXX/XXXXXXXXX
+  # BotAliasArn:
+  #   Value: !GetAtt dentalBookingBot.Arn
+  # arn:aws:lex:eu-west-2:xxxxxxxxxx:bot/botId
+  # arn:aws:lex:eu-west-2:xxxxxxxxxx:bot/XXXXXXXXX/

@@ -1,0 +1,204 @@
+Parameters:
+  LexArn:
+    Type: String
+  ConnectName:
+    Type: String
+Resources:
+  connectInstance:
+    Type: AWS::Connect::Instance
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Attributes:
+        InboundCalls: false
+        OutboundCalls: false
+      IdentityManagementType: "CONNECT_MANAGED"
+      InstanceAlias: !Ref ConnectName
+  connectInstanceFlow:
+    Type: AWS::Connect::ContactFlow
+    Properties:
+      Content: !Sub
+        - |
+          {
+            "Version": "2019-10-30",
+            "StartAction": "49075a4a-b855-4096-97c5-b21ad90ea8ae",
+            "Metadata": {
+              "entryPointPosition": {
+                "x": 40,
+                "y": 40
+              },
+              "ActionMetadata": {
+                "49075a4a-b855-4096-97c5-b21ad90ea8ae": {
+                  "position": {
+                    "x": 161.6,
+                    "y": -24
+                  }
+                },
+                "28c23c9d-f6de-4e60-8668-2842045fb036": {
+                  "position": {
+                    "x": 371.2,
+                    "y": -27.2
+                  },
+                  "children": ["bdceed93-334c-4351-8907-304b52ccaa07"],
+                  "overrideConsoleVoice": false,
+                  "fragments": {
+                    "SetContactData": "bdceed93-334c-4351-8907-304b52ccaa07"
+                  },
+                  "overrideLanguageAttribute": true
+                },
+                "bdceed93-334c-4351-8907-304b52ccaa07": {
+                  "position": {
+                    "x": 371.2,
+                    "y": -27.2
+                  },
+                  "dynamicParams": []
+                },
+                "3bb4ec0a-89bd-4c96-9e29-26aebc098af3": {
+                  "position": {
+                    "x": 814.4,
+                    "y": 324
+                  }
+                },
+                "4f22deb1-d6c3-47e5-a7cb-200c7e4b4e28": {
+                  "position": {
+                    "x": 854.4,
+                    "y": -29.6
+                  }
+                },
+                "b98bf6c6-01a3-48bc-bda5-66be8532cc9e": {
+                  "position": {
+                    "x": 617.6,
+                    "y": -26.4
+                  },
+                  "parameters": {
+                    "LexV2Bot": {
+                      "AliasArn": {
+                        "displayName": "TestBotAlias",
+                        "useLexBotDropdown": true,
+                        "lexV2BotName": "${LexName}"
+                      }
+                    }
+                  },
+                  "useLexBotDropdown": true,
+                  "lexV2BotName": "${LexName}",
+                  "lexV2BotAliasName": "TestBotAlias",
+                  "conditionMetadata": [
+                    {
+                      "id": "c1d02eb2-b557-40c4-8e9e-bc5373eb9de3",
+                      "operator": {
+                        "name": "Equals",
+                        "value": "Equals",
+                        "shortDisplay": "="
+                      },
+                      "value": "bookingIntent"
+                    }
+                  ]
+                }
+              },
+              "Annotations": []
+            },
+            "Actions": [
+              {
+                "Parameters": {
+                  "FlowLoggingBehavior": "Enabled"
+                },
+                "Identifier": "49075a4a-b855-4096-97c5-b21ad90ea8ae",
+                "Type": "UpdateFlowLoggingBehavior",
+                "Transitions": {
+                  "NextAction": "28c23c9d-f6de-4e60-8668-2842045fb036"
+                }
+              },
+              {
+                "Parameters": {
+                  "TextToSpeechVoice": "Emma"
+                },
+                "Identifier": "28c23c9d-f6de-4e60-8668-2842045fb036",
+                "Type": "UpdateContactTextToSpeechVoice",
+                "Transitions": {
+                  "NextAction": "bdceed93-334c-4351-8907-304b52ccaa07"
+                }
+              },
+              {
+                "Parameters": {
+                  "LanguageCode": "en-GB"
+                },
+                "Identifier": "bdceed93-334c-4351-8907-304b52ccaa07",
+                "Type": "UpdateContactData",
+                "Transitions": {
+                  "NextAction": "b98bf6c6-01a3-48bc-bda5-66be8532cc9e",
+                  "Errors": [
+                    {
+                      "NextAction": "b98bf6c6-01a3-48bc-bda5-66be8532cc9e",
+                      "ErrorType": "NoMatchingError"
+                    }
+                  ]
+                }
+              },
+              {
+                "Parameters": {},
+                "Identifier": "3bb4ec0a-89bd-4c96-9e29-26aebc098af3",
+                "Type": "DisconnectParticipant",
+                "Transitions": {}
+              },
+              {
+                "Parameters": {
+                  "Text": "Have a great day. Bye"
+                },
+                "Identifier": "4f22deb1-d6c3-47e5-a7cb-200c7e4b4e28",
+                "Type": "MessageParticipant",
+                "Transitions": {
+                  "NextAction": "3bb4ec0a-89bd-4c96-9e29-26aebc098af3",
+                  "Errors": [
+                    {
+                      "NextAction": "3bb4ec0a-89bd-4c96-9e29-26aebc098af3",
+                      "ErrorType": "NoMatchingError"
+                    }
+                  ]
+                }
+              },
+              {
+                "Parameters": {
+                  "Text": "Please send 'hi' to start.\nYou can send 'End Chat' to end the conversation.",
+                  "LexV2Bot": {
+                    "AliasArn": "${LexAliasArn}"
+                  }
+                },
+                "Identifier": "b98bf6c6-01a3-48bc-bda5-66be8532cc9e",
+                "Type": "ConnectParticipantWithLexBot",
+                "Transitions": {
+                  "NextAction": "3bb4ec0a-89bd-4c96-9e29-26aebc098af3",
+                  "Conditions": [
+                    {
+                      "NextAction": "4f22deb1-d6c3-47e5-a7cb-200c7e4b4e28",
+                      "Condition": {
+                        "Operator": "Equals",
+                        "Operands": ["bookingIntent"]
+                      }
+                    }
+                  ],
+                  "Errors": [
+                    {
+                      "NextAction": "4f22deb1-d6c3-47e5-a7cb-200c7e4b4e28",
+                      "ErrorType": "NoMatchingCondition"
+                    },
+                    {
+                      "NextAction": "3bb4ec0a-89bd-4c96-9e29-26aebc098af3",
+                      "ErrorType": "NoMatchingError"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+
+        - LexName: !Ref ConnectName
+          LexAliasArn: !Ref LexArn
+      InstanceArn: !GetAtt connectInstance.Arn
+      Name: "bookingFlow"
+      Type: "CONTACT_FLOW"
+
+Outputs:
+  ConnectArn:
+    Value: !GetAtt connectInstance.Arn
+  ConnectId:
+    Value: !GetAtt connectInstance.Id

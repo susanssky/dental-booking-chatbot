@@ -1,0 +1,26 @@
+name: Chatbot
+on: push
+permissions: # because use role-to-assume to login aws
+  id-token: write
+  contents: read
+jobs:
+  Chatbot:
+    runs-on: ubuntu-latest
+    env:
+      CONNECT_ADMIN_PW: ${{ secrets.CONNECT_ADMIN_PW }}
+      ROLE_TO_ASSUME: ${{ secrets.ROLE_TO_ASSUME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false # for get the terraform output value
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          aws-region: eu-west-2
+      - name: Terraform command
+        working-directory: ./3-lex
+        run: |
+          terraform init
+          terraform fmt -check
+          terraform apply -auto-approve -var "connect_pw=${CONNECT_ADMIN_PW}"
