@@ -19,7 +19,6 @@ jobs:
           role-to-assume: ${{ env.ROLE_TO_ASSUME }}
           aws-region: eu-west-2
       - name: Terraform command
-        working-directory: ./3-lex
         run: |
           terraform init
           terraform fmt -check
