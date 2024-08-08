@@ -1,5 +1,8 @@
 name: Chatbot
-on: push
+# on: push
+on:
+  project:
+    types: deleted
 permissions: # because use role-to-assume to login aws
   id-token: write
   contents: read

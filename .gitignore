@@ -1,6 +1,6 @@
-*/**/node_modules
-*/**/.terraform*
-*/**/terraform.tfstate*
-*/**/.DS_Store
-*/**/.gitignore
-*/**/.zip
+**/node_modules
+**/.terraform*
+**/terraform.tfstate*
+**/.DS_Store
+**/.gitignore
+**/*.zip
