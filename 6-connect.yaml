@@ -14,6 +14,12 @@ Resources:
         OutboundCalls: false
       IdentityManagementType: "CONNECT_MANAGED"
       InstanceAlias: !Ref ConnectName
+  connectIntegrationAssociation:
+    Type: AWS::Connect::IntegrationAssociation
+    Properties:
+      InstanceId: !GetAtt connectInstance.Arn
+      IntegrationType: LEX_BOT
+      IntegrationArn: !Ref LexArn
   connectInstanceFlow:
     Type: AWS::Connect::ContactFlow
     Properties:
@@ -202,3 +208,5 @@ Outputs:
     Value: !GetAtt connectInstance.Arn
   ConnectId:
     Value: !GetAtt connectInstance.Id
+  LexArn:
+    Value: !Ref LexArn

@@ -61,14 +61,3 @@ resource "aws_connect_user" "admin" {
 #     "Method"      = "Create"
 #   }
 # }
-
-
-########################################
-# After completing terraform, you must return to the amazon connect page of AWS and press Flows, and then join the amazon Lex bot, otherwise the bot on the front end will not work.
-resource "null_resource" "associate_bot" {
-  provisioner "local-exec" {
-    command = "aws connect associate-bot --instance-id ${aws_cloudformation_stack.connect_instance.outputs.ConnectId} --lex-v2-bot AliasArn=${local.source_arn}"
-  }
-
-  depends_on = [aws_cloudformation_stack.connect_instance]
-}
